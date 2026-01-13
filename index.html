@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Lên lịch trực nhật lớp</title>
+
+<style>
+:root{
+  --bg:#eef2ff;
+  --card:#ffffff;
+  --primary:#4f46e5;
+  --secondary:#06b6d4;
+  --accent:#22c55e;
+  --danger:#ef4444;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --page-bg: linear-gradient(135deg,var(--bg),#c7d2fe);
+}
+/* ===== THEMES (màu chủ đạo) ===== */
+/* ===== THEMES (màu + nền) ===== */
+body.theme-indigo{
+  --primary:#4f46e5; --secondary:#06b6d4;
+  --page-bg: linear-gradient(135deg,#eef2ff,#c7d2fe);
+}
+body.theme-emerald{
+  --primary:#10b981; --secondary:#22c55e;
+  --page-bg: linear-gradient(135deg,#ecfdf5,#bbf7d0);
+}
+body.theme-rose{
+  --primary:#f43f5e; --secondary:#fb7185;
+  --page-bg: linear-gradient(135deg,#fff1f2,#fecdd3);
+}
+body.theme-amber{
+  --primary:#f59e0b; --secondary:#f97316;
+  --page-bg: linear-gradient(135deg,#fffbeb,#fed7aa);
+}
+body.theme-slate{
+  --primary:#334155; --secondary:#64748b;
+  --page-bg: linear-gradient(135deg,#f1f5f9,#cbd5e1);
+}
+
+body.dark{
+  --bg:#0f172a;
+  --card:#1e293b;
+  --text:#e5e7eb;
+  --muted:#9ca3af;  
+  --page-bg: linear-gradient(135deg,#0f172a,#1e293b);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  padding:20px;
+  font-family:Segoe UI,Arial;
+  background:var(--page-bg);
+  color:var(--text);
+  transition:.3s;
+}
+
+h1{text-align:center;margin-bottom:10px}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  max-width:1200px;
+  margin:auto;
+}
+
+button{
+  border:none;
+  padding:8px 14px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:500;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  color:white;
+}
+
+button.secondary{
+  background:linear-gradient(135deg,#64748b,#94a3b8);
+}
+
+button.green{
+  background:linear-gradient(135deg,#22c55e,#4ade80);
+}
+
+button.red{
+  background:linear-gradient(135deg,#ef4444,#f87171);
+}
+
+button.small{
+  padding:4px 8px;
+  font-size:12px;
+}
+
+.container{
+  max-width:1200px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:16px;
+}
+
+.card{
+  background:var(--card);
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 10px 25px rgba(0,0,0,.15);
+}
+
+.card h3{
+  margin-top:0;
+  color:var(--primary);
+}
+
+/* Chỉ áp dụng full width cho input dạng nhập liệu, KHÔNG áp cho checkbox */
+textarea,
+select,
+input[type="date"],
+input[type="number"],
+input[type="text"]{
+  width:100%;
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #c7d2fe;
+  background:transparent;
+  color:var(--text);
+}
+/* Làm ô danh sách học sinh cao hơn */
+#studentsInput{
+  min-height: 220px;   /* bạn tăng/giảm tùy ý: 180–320px */
+  resize: vertical;    /* cho phép kéo cao/thấp */
+  line-height: 1.4;
+}
+/* Checkbox: để auto + canh đẹp */
+input[type="checkbox"]{
+  width:auto;
+  padding:0;
+  margin:0;
+}
+
+/* Lưới ngày trong tuần gọn & không lệch */
+.weekdays{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:8px 12px;
+  margin-bottom:10px;
+}
+
+.weekdays label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:0;
+  user-select:none;
+}
+
+.error{
+  text-align:center;
+  color:var(--danger);
+  font-weight:bold;
+  margin-bottom:10px;
+}
+
+/* TABLE */
+table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  border-radius:14px;
+  overflow:hidden;
+}
+
+th{
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  color:white;
+  padding:10px;
+}
+
+td{
+  padding:8px;
+  border-bottom:1px solid #334155;
+  background:var(--card);
+  text-align:center;
+}
+
+tr.thursday td{
+  background:rgba(34,197,94,.15);
+}
+
+select{margin:2px 0}
+
+select.locked{
+  opacity:.6;
+  pointer-events:none;
+}
+
+/* PRINT */
+@media print{
+  button,textarea,input,.weekdays,.topbar{display:none}
+  body{background:white}
+  .card{box-shadow:none}
+}
+</style>
+</head>
+
+<body class="theme-indigo">
+
+<div class="topbar">
+  <h1>📅 Lên lịch trực nhật lớp</h1>
+
+  <div style="display:flex; gap:10px; align-items:center;">
+    <select id="themeSelect" style="width:160px;">
+      <option value="theme-indigo">Indigo (mặc định)</option>
+      <option value="theme-emerald">Emerald</option>
+      <option value="theme-rose">Rose</option>
+      <option value="theme-amber">Amber</option>
+      <option value="theme-slate">Slate</option>
+    </select>
+    <button class="secondary" onclick="toggleDark()">🌙 / ☀</button>
+  </div>
+</div>
+
+
+<div id="error" class="error"></div>
+
+<div class="container">
+
+  <div class="card">
+    <h3>👩‍🎓 Danh sách học sinh</h3>
+    <textarea id="studentsInput" placeholder="Mỗi dòng 1 tên..."></textarea>
+    <button onclick="cleanStudents()">Làm sạch</button>
+    <button class="secondary" onclick="shuffleStudents()">Shuffle</button>
+    <small>Số HS: <b id="studentCount">0</b></small>
+  </div>
+
+  <div class="card">
+    <h3>📆 Thời gian</h3>
+   <div style="display:grid; gap:8px;">
+  <div>
+    <input type="date" id="startDate">
+    <small style="color:var(--muted)">Hiển thị: <b id="startDateDMY">--/--/----</b></small>
+  </div>
+  <div>
+    <input type="date" id="endDate">
+    <small style="color:var(--muted)">Hiển thị: <b id="endDateDMY">--/--/----</b></small>
+  </div>
+</div>
+  </div>
+
+  <div class="card">
+    <h3>📌 Lọc ngày</h3>
+    <div class="weekdays">
+      <label><input type="checkbox" class="weekday" value="1" checked> T2</label>
+      <label><input type="checkbox" class="weekday" value="2" checked> T3</label>
+      <label><input type="checkbox" class="weekday" value="3" checked> T4</label>
+      <label><input type="checkbox" class="weekday" value="4" checked> T5</label>
+      <label><input type="checkbox" class="weekday" value="5" checked> T6</label>
+      <label><input type="checkbox" class="weekday" value="6"> T7</label>
+      <label><input type="checkbox" class="weekday" value="0"> CN</label>
+    </div>
+    <textarea id="exceptionsInput" placeholder="Ngày nghỉ (mỗi dòng 1 ngày): dd/mm/yyyy hoặc yyyy-mm-dd"></textarea>
+  </div>
+
+
+  <div class="card">
+    <h3>⚙️ Điều khiển</h3>
+    <input type="number" id="startIndex" min="0" value="0">
+    <button class="green" onclick="generate()">✨ Tạo lịch</button>
+    <div style="display:grid; grid-template-columns: 1fr auto auto; gap:10px; margin:10px 0;">
+  <select id="profileSelect"></select>
+  <button class="secondary" onclick="createProfile()">➕</button>
+  <button class="red" onclick="deleteProfile()">🗑</button>
+</div>
+    <button onclick="saveConfig()">💾 Lưu</button>
+    <button onclick="loadConfig()">📂 Tải</button>
+    <button onclick="exportPNG()">📷 PNG</button>
+    <button onclick="exportCSV()">📤 CSV</button>
+    <button class="secondary" onclick="window.print()">🖨 In</button>
+    <button id="btnUndo" class="secondary" onclick="undo()">↩ Undo</button>
+    <button id="btnRedo" class="secondary" onclick="redo()">↪ Redo</button>
+
+
+  </div>
+
+</div>
+
+<div class="card" style="margin-top:20px">
+  <h3>📋 Bảng phân công</h3>
+  <div style="display:grid; grid-template-columns: 1fr 180px 110px; gap:10px; margin:10px 0;">
+  <input id="searchName" type="text" placeholder="Tìm theo tên...">
+  <input id="searchDate" type="date">
+  <button class="secondary" onclick="clearSearch()">Xóa lọc</button>
+</div>
+  <div id="schedule"></div>
+</div>
+
+<div class="card" style="margin-top:20px">
+  <h3>📊 Thống kê số ca trực</h3>
+  <div id="stats"></div>
+</div>
+
+<script>
+let state={students:[],schedule:[],locked:{}};
+function formatDMY(d){
+  const dd = String(d.getDate()).padStart(2,"0");
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+// ===== UNDO / REDO =====
+let history = [];
+let historyIndex = -1;
+
+function snapshotState(){
+  // Chỉ snapshot những thứ cần undo/redo
+  return {
+    students: [...state.students],
+    schedule: JSON.parse(JSON.stringify(state.schedule)),
+    locked: JSON.parse(JSON.stringify(state.locked)),
+    // giữ filter nếu bạn muốn undo theo filter, còn không thì bỏ
+  };
+}
+
+function applySnapshot(snap){
+  state.students = [...snap.students];
+  // Phục hồi Date object
+  state.schedule = snap.schedule.map(r => ({
+    date: new Date(r.date),
+    morning: [...(r.morning || [])],
+    afternoon: [...(r.afternoon || [])]
+  }));
+  state.locked = {...(snap.locked || {})};
+  render();
+}
+
+function pushHistory(){
+  const snap = snapshotState();
+
+  // Nếu đang ở giữa history mà có thay đổi mới => cắt nhánh redo
+  if (historyIndex < history.length - 1) {
+    history = history.slice(0, historyIndex + 1);
+  }
+
+  history.push(snap);
+  historyIndex = history.length - 1;
+
+  updateUndoRedoUI();
+}
+
+function undo(){
+  if (historyIndex <= 0) return;
+  historyIndex--;
+  applySnapshot(history[historyIndex]);
+  updateUndoRedoUI();
+}
+
+function redo(){
+  if (historyIndex >= history.length - 1) return;
+  historyIndex++;
+  applySnapshot(history[historyIndex]);
+  updateUndoRedoUI();
+}
+
+function updateUndoRedoUI(){
+  const u = document.getElementById("btnUndo");
+  const r = document.getElementById("btnRedo");
+  if (u) u.disabled = !(historyIndex > 0);
+  if (r) r.disabled = !(historyIndex < history.length - 1);
+}
+
+// Phím tắt Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z
+document.addEventListener("keydown", (e) => {
+  const isMac = navigator.platform.toUpperCase().includes("MAC");
+  const ctrl = isMac ? e.metaKey : e.ctrlKey;
+
+  if (!ctrl) return;
+
+  // Nếu đang gõ trong input/textarea/select thì vẫn cho undo/redo lịch (tuỳ bạn)
+  if (e.key.toLowerCase() === "z") {
+    e.preventDefault();
+    if (e.shiftKey) redo();
+    else undo();
+  }
+  if (e.key.toLowerCase() === "y") {
+    e.preventDefault();
+    redo();
+  }
+});
+// ===== THEME SWITCHER =====
+const THEME_KEY = "theme_class";
+const THEMES = ["theme-indigo","theme-emerald","theme-rose","theme-amber","theme-slate"];
+
+function applyTheme(themeClass){
+  // gỡ theme cũ
+  THEMES.forEach(t => document.body.classList.remove(t));
+  // set theme mới
+  if (THEMES.includes(themeClass)) {
+    document.body.classList.add(themeClass);
+    localStorage.setItem(THEME_KEY, themeClass);
+  } else {
+    // fallback
+    document.body.classList.add("theme-indigo");
+    localStorage.setItem(THEME_KEY, "theme-indigo");
+  }
+}
+
+function initTheme(){
+  const saved = localStorage.getItem(THEME_KEY) || "theme-indigo";
+  applyTheme(saved);
+
+  const sel = document.getElementById("themeSelect");
+  if(sel){
+    sel.value = saved;
+    sel.addEventListener("change", () => applyTheme(sel.value));
+  }
+}
+
+
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  localStorage.setItem("dark",document.body.classList.contains("dark"));
+}
+if(localStorage.getItem("dark")==="true") document.body.classList.add("dark");
+
+function showError(m){error.innerText=m||""}
+
+function cleanStudents(){
+  const a=studentsInput.value.split("\n").map(s=>s.trim()).filter(Boolean);
+  studentsInput.value=a.join("\n");
+  studentCount.innerText=a.length;
+}
+
+function shuffleStudents(){
+  cleanStudents();
+  let a=studentsInput.value.split("\n");
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  studentsInput.value=a.join("\n");
+}
+
+function getValidDates(s,e,w,ex){
+  let d=new Date(s),r=[];
+  while(d<=e){
+    const iso=d.toISOString().slice(0,10);
+    if(w.includes(d.getDay())&&!ex.includes(iso)) r.push(new Date(d));
+    d.setDate(d.getDate()+1);
+  }
+  return r;
+}
+
+function generateScheduleRoundRobin(stu,dates,start){
+  let i=start,n=stu.length,res=[];
+  dates.forEach(d=>{
+    if(d.getDay()===4){
+      res.push({date:d,morning:[],afternoon:[stu[i%n],stu[(i+1)%n]]});
+      i=(i+2)%n;
+    }else{
+      const p=[stu[i%n],stu[(i+1)%n],stu[(i+2)%n],stu[(i+3)%n]];
+      res.push({date:d,morning:p.slice(0,2),afternoon:p.slice(2)});
+      i=(i+4)%n;
+    }
+  });
+  return res;
+}
+
+function generate(){
+  showError("");
+  cleanStudents();
+  const stu=studentsInput.value.split("\n");
+  if(stu.length<4) return showError("Không đủ học sinh");
+  const s=new Date(startDate.value),e=new Date(endDate.value);
+  if(isNaN(s)||isNaN(e)||s>e) return showError("Ngày không hợp lệ");
+  const w=[...document.querySelectorAll(".weekday:checked")].map(c=>+c.value);
+  const ex = exceptionsInput.value
+  .split("\n")
+  .map(s=>s.trim())
+  .filter(Boolean)
+  .map(s=>{
+    // nếu dd/mm/yyyy -> đổi sang yyyy-mm-dd để so sánh
+    if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)){
+      const [dd,mm,yyyy] = s.split("/").map(Number);
+      return `${yyyy}-${String(mm).padStart(2,"0")}-${String(dd).padStart(2,"0")}`;
+    }
+    return s; // giữ nguyên nếu đã là yyyy-mm-dd
+  });
+  state.students=stu;
+  state.schedule=generateScheduleRoundRobin(stu,getValidDates(s,e,w,ex),+startIndex.value||0);
+  state.locked={};
+  render();
+  pushHistory();
+}
+
+function render(){
+  renderTable();
+  renderStats();
+}
+function clearSearch(){
+  const n = document.getElementById("searchName");
+  const d = document.getElementById("searchDate");
+  if(n) n.value = "";
+  if(d) d.value = "";
+  renderTable();
+}
+function swapDay(rowIndex){
+  const r = state.schedule[rowIndex];
+  if(!r) return;
+
+  // Thứ 5 bạn đang có luật: chỉ có ca chiều 2 bạn -> không cho đảo
+  if(r.date.getDay() === 4){
+    alert("Thứ 5 chỉ trực ca chiều nên không thể đảo ca.");
+    return;
+  }
+
+  const tmp = r.morning;
+  r.morning = r.afternoon;
+  r.afternoon = tmp;
+
+  render(); // cập nhật bảng + thống kê
+
+  // nếu bạn có Undo/Redo
+  if(typeof pushHistory === "function") pushHistory();
+}
+function renderTable(){
+  if(!state.schedule.length){schedule.innerHTML="";return;}
+
+  const nameQ = (document.getElementById("searchName")?.value || "").trim().toLowerCase();
+  const dateQ = (document.getElementById("searchDate")?.value || "").trim(); // YYYY-MM-DD
+
+  const rows = state.schedule.filter(r=>{
+  const iso = r.date.toISOString().slice(0,10); // YYYY-MM-DD để so với input type="date"
+  if(dateQ && iso !== dateQ) return false;
+
+  if(nameQ){
+    const all = [...(r.morning||[]), ...(r.afternoon||[])].join(" ").toLowerCase();
+    if(!all.includes(nameQ)) return false;
+  }
+
+  return true;
+});
+
+
+  let h=`<table><tr><th>Ngày</th><th>Thứ</th><th>Ca sáng</th><th>Ca chiều</th></tr>`;
+  rows.forEach((r)=>{
+    const i = state.schedule.indexOf(r); // lấy index gốc để cell() sửa đúng
+    const w=["CN","T2","T3","T4","T5","T6","T7"][r.date.getDay()];
+    h+=`<tr class="${r.date.getDay()===4?"thursday":""}" ondblclick="swapDay(${i})" title="Double-click để đảo ca (không áp dụng T5)">
+  <td>${formatDMY(r.date)}</td>
+  <td>${w}</td>
+  <td>${cell(r.morning,i,"morning")}</td>
+  <td>${cell(r.afternoon,i,"afternoon")}</td>
+</tr>`;
+  });
+
+  schedule.innerHTML=h+"</table>";
+}
+
+
+function cell(arr,r,t){
+  if(!arr.length) return "—";
+  return arr.map((n,i)=>{
+    const key = `${r}-${t}-${i}`;
+    const isLocked = !!state.locked[key];
+
+    return `
+      <div style="display:flex; gap:6px; align-items:center; justify-content:center; margin:2px 0;">
+        <select class="${isLocked ? "locked" : ""}"
+        onchange="state.schedule[${r}].${t}[${i}]=this.value;renderStats();pushHistory();">
+          ${state.students.map(s=>`<option ${s===n?"selected":""}>${s}</option>`).join("")}
+        </select>
+        <button class="small secondary" onclick="lock('${key}')">${isLocked ? "🔓" : "🔒"}</button>
+      </div>
+    `;
+  }).join("");
+}
+
+function lock(k){
+  state.locked[k]=!state.locked[k];
+  renderTable();
+  pushHistory();
+}
+
+function renderStats(){
+  let c={};
+  state.students.forEach(s=>c[s]=0);
+  state.schedule.forEach(r=>{
+    [...r.morning,...r.afternoon].forEach(s=>c[s]++);
+  });
+  stats.innerHTML=Object.entries(c)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([n,v])=>`${n}: <b>${v}</b> ca`)
+    .join("<br>");
+}
+
+// ===== PROFILES =====
+const PROFILES_KEY = "profiles_index";
+const ACTIVE_PROFILE_KEY = "profiles_active";
+
+function getProfiles(){
+  try{
+    return JSON.parse(localStorage.getItem(PROFILES_KEY) || "[]");
+  }catch{ return []; }
+}
+
+function setProfiles(arr){
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(arr));
+}
+
+function getActiveProfile(){
+  return localStorage.getItem(ACTIVE_PROFILE_KEY) || "";
+}
+
+function setActiveProfile(id){
+  localStorage.setItem(ACTIVE_PROFILE_KEY, id);
+}
+
+function profileKey(id){
+  return `cfg_${id}`;
+}
+
+function refreshProfileSelect(){
+  const sel = document.getElementById("profileSelect");
+  if(!sel) return;
+
+  const profiles = getProfiles();
+  sel.innerHTML = profiles.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+
+  const active = getActiveProfile();
+  if(active && profiles.some(p=>p.id===active)) sel.value = active;
+  else if(profiles[0]) { sel.value = profiles[0].id; setActiveProfile(profiles[0].id); }
+
+  sel.onchange = () => {
+    setActiveProfile(sel.value);
+  };
+}
+
+function initProfiles(){
+  let profiles = getProfiles();
+  if(!profiles.length){
+    profiles = [{id:"default", name:"Mặc định"}];
+    setProfiles(profiles);
+    setActiveProfile("default");
+  }
+  refreshProfileSelect();
+}
+
+function createProfile(){
+  const name = prompt("Tên profile (vd: Lớp 5A):");
+  if(!name) return;
+
+  const id = "p_" + Date.now();
+  const profiles = getProfiles();
+  profiles.push({id, name: name.trim()});
+  setProfiles(profiles);
+  setActiveProfile(id);
+  refreshProfileSelect();
+  alert("✅ Đã tạo profile. Bạn có thể bấm Lưu để lưu cấu hình vào profile này.");
+}
+
+function deleteProfile(){
+  const profiles = getProfiles();
+  const sel = document.getElementById("profileSelect");
+  if(!sel) return;
+  const id = sel.value;
+
+  if(id === "default"){
+    alert("Không xóa được profile Mặc định.");
+    return;
+  }
+  if(!confirm("Xóa profile này? Dữ liệu đã lưu sẽ mất.")) return;
+
+  const next = profiles.filter(p=>p.id !== id);
+  setProfiles(next);
+  localStorage.removeItem(profileKey(id));
+
+  setActiveProfile(next[0]?.id || "default");
+  refreshProfileSelect();
+}
+
+// ===== SAVE/LOAD theo profile =====
+function saveConfig(){
+  try{
+    const id = getActiveProfile() || "default";
+    localStorage.setItem(profileKey(id), JSON.stringify({
+      s:studentsInput.value,
+      sd:startDate.value,
+      ed:endDate.value,
+      w:[...document.querySelectorAll(".weekday")].map(c=>c.checked),
+      ex:exceptionsInput.value,
+      i:startIndex.value,
+      dark:document.body.classList.contains("dark")
+    }));
+    alert("✅ Đã lưu vào profile: " + (document.getElementById("profileSelect")?.selectedOptions?.[0]?.text || id));
+  }catch(e){
+    console.error(e);
+    showError("❌ Không thể lưu (có thể bị chặn localStorage).");
+  }
+}
+
+function loadConfig(){
+  try{
+    const id = getActiveProfile() || "default";
+    const raw = localStorage.getItem(profileKey(id));
+    if(!raw){
+      alert("⚠️ Profile này chưa có dữ liệu. Hãy bấm Lưu trước.");
+      return;
+    }
+    const d = JSON.parse(raw);
+
+    studentsInput.value=d.s||"";
+    startDate.value=d.sd||"";
+    endDate.value=d.ed||"";
+    exceptionsInput.value=d.ex||"";
+    startIndex.value=d.i ?? 0;
+
+    document.querySelectorAll(".weekday").forEach((c,i)=>{
+      if(Array.isArray(d.w) && i<d.w.length) c.checked=!!d.w[i];
+    });
+
+    document.body.classList.toggle("dark", !!d.dark);
+    cleanStudents();
+
+    alert("📂 Đã tải từ profile.");
+  }catch(e){
+    console.error(e);
+    showError("❌ Không thể tải (dữ liệu lỗi hoặc bị chặn localStorage).");
+  }
+}
+function exportPNG(){
+  const table = document.querySelector("#schedule table");
+  if(!table){
+    alert("Chưa có bảng để xuất. Hãy tạo lịch trước.");
+    return;
+  }
+
+  // Lấy text từng ô (đặc biệt ô ca có <select>)
+  const trs = [...table.querySelectorAll("tr")];
+  const grid = trs.map(tr => {
+    const cells = [...tr.querySelectorAll("th,td")];
+    return cells.map(td => {
+      const selects = [...td.querySelectorAll("select")];
+      if(selects.length){
+        return selects.map(s => s.value).join(" - ");
+      }
+      return td.innerText.trim().replace(/\s+/g," ");
+    });
+  });
+
+  // Vẽ bảng lên canvas
+  const padding = 20;
+  const rowH = 34;
+  const headerH = 38;
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  // font (bạn có thể đổi)
+  ctx.font = "14px Segoe UI, Arial";
+  const cellPadX = 12;
+
+  // Tính độ rộng từng cột theo text dài nhất
+  const cols = Math.max(...grid.map(r => r.length));
+  const colW = Array(cols).fill(0);
+
+  for(const row of grid){
+    for(let c=0;c<cols;c++){
+      const text = (row[c] ?? "");
+      const w = ctx.measureText(text).width + cellPadX*2;
+      colW[c] = Math.max(colW[c], Math.ceil(w));
+    }
+  }
+
+  const width = padding*2 + colW.reduce((a,b)=>a+b,0);
+  const height = padding*2 + (grid.length-1)*rowH + headerH;
+
+  canvas.width = Math.ceil(width);
+  canvas.height = Math.ceil(height);
+
+  // Nền trắng
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // Vẽ header nền xám nhạt
+  let x0 = padding, y0 = padding;
+  ctx.fillStyle = "#f1f5f9";
+  ctx.fillRect(x0, y0, colW.reduce((a,b)=>a+b,0), headerH);
+
+  // Viền + chữ
+  ctx.strokeStyle = "#94a3b8";
+  ctx.fillStyle = "#0f172a";
+  ctx.textBaseline = "middle";
+
+  // Vẽ từng ô
+  let y = y0;
+  for(let r=0;r<grid.length;r++){
+    const isHeader = (r===0);
+    const h = isHeader ? headerH : rowH;
+
+    let x = x0;
+    for(let c=0;c<cols;c++){
+      const w = colW[c];
+      // khung ô
+      ctx.strokeRect(x, y, w, h);
+
+      // text
+      const text = (grid[r][c] ?? "");
+      ctx.fillStyle = isHeader ? "#0f172a" : "#111827";
+      ctx.font = isHeader ? "bold 14px Segoe UI, Arial" : "14px Segoe UI, Arial";
+      ctx.fillText(text, x + cellPadX, y + h/2);
+
+      x += w;
+    }
+    y += h;
+  }
+
+  // Tải PNG
+  canvas.toBlob(blob => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "lich_truc_nhat.png";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }, "image/png");
+}
+function exportCSV(){
+  if(!state.schedule.length) return;
+  let csv="Ngày,Thứ,Ca sáng,Ca chiều\n";
+  state.schedule.forEach(r=>{
+    csv+=`${formatDMY(r.date)},${["CN","T2","T3","T4","T5","T6","T7"][r.date.getDay()]},"${r.morning.join(" - ")}","${r.afternoon.join(" - ")}"\n`;
+  });
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv]));
+  a.download="lich_truc_nhat.csv";
+  a.click();
+}
+document.addEventListener("input", (e)=>{
+  if(e.target && (e.target.id === "searchName")) renderTable();
+});
+document.addEventListener("change", (e)=>{
+  if(e.target && (e.target.id === "searchDate")) renderTable();
+});
+document.addEventListener("DOMContentLoaded", () => {
+  initProfiles();
+  updateUndoRedoUI();
+  initTheme();
+});
+function isoToDMY(iso){
+  if(!iso) return "--/--/----";
+  const [y,m,d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+function updateTimeDMY(){
+  const s = document.getElementById("startDate");
+  const e = document.getElementById("endDate");
+  const sd = document.getElementById("startDateDMY");
+  const ed = document.getElementById("endDateDMY");
+  if(sd) sd.textContent = isoToDMY(s?.value);
+  if(ed) ed.textContent = isoToDMY(e?.value);
+}
+
+document.getElementById("startDate")?.addEventListener("change", updateTimeDMY);
+document.getElementById("endDate")?.addEventListener("change", updateTimeDMY);
+document.addEventListener("DOMContentLoaded", updateTimeDMY);
+function isoToDMY(iso){
+  if(!iso) return "--/--/----";
+  const [y,m,d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+function updateTimeDMY(){
+  const s = document.getElementById("startDate");
+  const e = document.getElementById("endDate");
+  const sd = document.getElementById("startDateDMY");
+  const ed = document.getElementById("endDateDMY");
+
+  if(sd) sd.textContent = isoToDMY(s ? s.value : "");
+  if(ed) ed.textContent = isoToDMY(e ? e.value : "");
+}
+
+// cập nhật ngay khi chọn ngày
+document.getElementById("startDate")?.addEventListener("change", updateTimeDMY);
+document.getElementById("endDate")?.addEventListener("change", updateTimeDMY);
+
+// cập nhật ngay khi mở trang (nếu input đã có giá trị)
+window.addEventListener("load", updateTimeDMY);
+</script>
+
+</body>
+</html>
