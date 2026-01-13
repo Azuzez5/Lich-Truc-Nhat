@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta charset="UTF-8">
 <title>Lên lịch trực nhật lớp</title>
 
@@ -203,6 +203,59 @@ select.locked{
   button,textarea,input,.weekdays,.topbar{display:none}
   body{background:white}
   .card{box-shadow:none}
+}
+  /* ===== MOBILE SCALE FIX ===== */
+@media (max-width: 768px){
+  body{
+    padding: 12px;
+    font-size: 16px;            /* tăng chữ tổng */
+  }
+
+  .container{
+    grid-template-columns: 1fr; /* xếp 1 cột cho dễ nhìn */
+    gap: 12px;
+  }
+
+  h1{
+    font-size: 20px;
+  }
+
+  .card{
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  button{
+    padding: 12px 14px;         /* nút bự hơn, dễ bấm */
+    border-radius: 14px;
+    font-size: 15px;
+  }
+
+  textarea,
+  select,
+  input[type="date"],
+  input[type="number"],
+  input[type="text"]{
+    padding: 12px;
+    font-size: 16px;            /* iOS: >=16px để tránh tự zoom */
+    border-radius: 12px;
+  }
+
+  /* bảng đỡ chật */
+  th, td{
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+
+  /* iOS: dropdown bé -> tăng min-height */
+  select{
+    min-height: 44px;
+  }
+
+  /* vùng đổi tên + khóa trong cell: cho thoáng */
+  .cellRow{
+    gap: 8px;
+  }
 }
 </style>
 </head>
@@ -893,3 +946,4 @@ window.addEventListener("load", updateTimeDMY);
 
 </body>
 </html>
+
