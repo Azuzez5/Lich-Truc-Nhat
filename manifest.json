@@ -1,0 +1,25 @@
+{
+  "name": "Lên lịch trực nhật lớp",
+  "short_name": "Trực nhật",
+  "description": "Ứng dụng tạo và quản lý lịch trực nhật lớp học.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef2ff",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
