@@ -508,18 +508,47 @@ function getValidDates(s,e,w,ex){
   return r;
 }
 
-function generateScheduleRoundRobin(stu,dates,start){
-  let i=start,n=stu.length,res=[];
-  dates.forEach(d=>{
-    if(d.getDay()===4){
-      res.push({date:d,morning:[],afternoon:[stu[i%n],stu[(i+1)%n]]});
-      i=(i+2)%n;
-    }else{
-      const p=[stu[i%n],stu[(i+1)%n],stu[(i+2)%n],stu[(i+3)%n]];
-      res.push({date:d,morning:p.slice(0,2),afternoon:p.slice(2)});
-      i=(i+4)%n;
+function generateScheduleRoundRobin(stu, dates, start){
+  let i = start;
+  const n = stu.length;
+  let res = [];
+
+  dates.forEach(d => {
+
+    // THỨ 5: chỉ có 2 học sinh CA SÁNG
+    if(d.getDay() === 4){
+      res.push({
+        date: d,
+        morning: [
+          stu[i % n],
+          stu[(i + 1) % n]
+        ],
+        afternoon: []
+      });
+
+      i = (i + 2) % n;
+
+    } else {
+
+      // Các ngày còn lại:
+      // 2 học sinh sáng + 2 học sinh chiều
+      const p = [
+        stu[i % n],
+        stu[(i + 1) % n],
+        stu[(i + 2) % n],
+        stu[(i + 3) % n]
+      ];
+
+      res.push({
+        date: d,
+        morning: p.slice(0, 2),
+        afternoon: p.slice(2)
+      });
+
+      i = (i + 4) % n;
     }
   });
+
   return res;
 }
 
@@ -567,9 +596,9 @@ function swapDay(rowIndex){
 
   // Thứ 5 bạn đang có luật: chỉ có ca chiều 2 bạn -> không cho đảo
   if(r.date.getDay() === 4){
-    alert("Thứ 5 chỉ trực ca chiều nên không thể đảo ca.");
-    return;
-  }
+  alert("Thứ 5 chỉ trực ca sáng nên không thể đảo ca.");
+  return;
+}
 
   const tmp = r.morning;
   r.morning = r.afternoon;
@@ -947,5 +976,3 @@ window.addEventListener("load", updateTimeDMY);
 
 </body>
 </html>
-
-
